@@ -6,6 +6,7 @@ type Player = {
     Id : string
     Points : int
     Position : Coordinates
+    Secret : string
     }
 
 type ItemType =
@@ -30,9 +31,12 @@ let empty = {
     Items = [] 
     }
 
+type PlayerName = string
+type Secret = string
+
 type Event =
     | BoardCreated of string * Coordinates
-    | PlayerSpawned of string * Coordinates
+    | PlayerSpawned of PlayerName * Coordinates * Secret
     | ItemSpawned of Item
 
 type SequencedEvent = int * Event // Usefull?
@@ -57,12 +61,12 @@ let makeItem position =
 
 let (-><-) s x = (Seq.take x s), (Seq.skip x s)
 
-let makeGameWorld names size itemCount =
-    let playerCount = Seq.length names
+let makeGameWorld namePasswords size itemCount =
+    let playerCount = Seq.length namePasswords
     let positions = uniqueRandomPos (itemCount + playerCount) size
     let playerPos, itemPos = positions -><- playerCount
     Seq.append
-        (Seq.map2 (fun n p -> PlayerSpawned(n, p)) names playerPos)
+        (Seq.map2 (fun (n,pw) p -> PlayerSpawned(n, p, pw)) namePasswords playerPos)
         (itemPos |> Seq.map makeItem |> Seq.map ItemSpawned)
 
 

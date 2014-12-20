@@ -37,23 +37,36 @@ let promptBoardDimentions () =
 let promptItemCount () =
     promptInt "How many items do you want on the board? "
 
+let genSecret len =
+    let chars = [|'A';'C';'D';'E';'F';'H';'J';'K'
+                  'L';'M';'N';'P';'Q';'R';'T';'U'
+                  'W';'X';'Y';'Z';'2';'3';'4';'7'
+                  '9';'%';'d';'!';'r';'e';'g';'i'|]
+    let rec loop n secret = 
+        if n > 0
+        then chars.[GameWorld.rnd.Next(chars.Length)]::secret
+             |> loop (n - 1)
+        else String.Join("", secret)
+    loop len []
+
 let startupNew () =
     hr ()
     printfn "SETTING UP A NEW GAME..\n"
     let gameKey = promptGameKey ()
-    let playerNames = promptPlayerNames ()
+    let players = promptPlayerNames ()
+                  |> Seq.map (fun name -> (name, genSecret 5))
     let size = promptBoardDimentions ()
     let itemCount = promptItemCount ()
     hr ()
-    let initEvents = GameWorld.makeGameWorld 
-                        playerNames 
-                        size 
-                        itemCount
+    printfn "\nPASSWORDS NEEDED TO ISSUE COMMANDS"
+    players |> Seq.iter (fun (n,p) -> printfn "%s: %s" n p)
+    hr ()
+    printfn "\nPress ENTER to begin...\n"
+    Console.ReadLine () |> ignore
     Seq.append 
         [GameWorld.BoardCreated (gameKey, size)]
-        initEvents
+        (GameWorld.makeGameWorld players size itemCount)
     |> Engine.processEvents
-    //Engine.ping () // Syncronize.., wait for all events (not needed now)
     setInterval 5000 
         (fun () ->
             Reporting.queryBoardASCII ()
