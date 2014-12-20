@@ -4,6 +4,7 @@ open System.Net
 open System.Web
 
 let respond (ctx:HttpListenerContext) (code, (result:string)) =
+    Log.dbg <| sprintf "<< %d" code
     use res = ctx.Response
     res.StatusCode <- code
     let bytes = ctx.Request.ContentEncoding.GetBytes result
@@ -21,12 +22,10 @@ let dispatch (ctx:HttpListenerContext) =
     |> respond ctx 
 
 let handleRequest (ctx:HttpListenerContext) = 
-    async {
-        let req = ctx.Request
-        sprintf "[%s] %A" req.HttpMethod req.Url
-        |> Log.dbg
-        dispatch ctx
-    }
+    async { let req = ctx.Request
+            sprintf ">> [%s] %A" req.HttpMethod req.Url
+            |> Log.dbg
+            dispatch ctx }
 
 let listenForRequests address port =
     let listener = new HttpListener()
