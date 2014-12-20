@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Log.fs" />
     <Compile Include="GameWorld.fs" />
+    <Compile Include="ReportingAscii.fs" />
     <Compile Include="Reporting.fs" />
     <Compile Include="Engine.fs" />
     <Compile Include="Http.fs" />
