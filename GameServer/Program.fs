@@ -16,7 +16,7 @@ let promptGameKey () =
 let promptPlayerNames () =
     let rec loop i acc =
         match prompt <| 
-              sprintf "Enter player name #%d (ENTER when done): " i 
+              sprintf "Enter player name #%d (empty when no more): " i 
               with
         | "" -> acc
         | name -> name::acc |> loop (i + 1)
