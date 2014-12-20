@@ -17,20 +17,21 @@ type Item = Coordinates * ItemType
 type World = {
     GameKey: string
     Size: Coordinates
-    Players : Player seq
-    Items: Item seq 
+    Players : Player list
+    Items: Item list
     }
 
-let empty key size = {
-    GameKey = key
-    Size = size
+let empty = {
+    GameKey = ""
+    Size = 0,0
     Players = []
     Items = [] 
     }
 
 type Event =
+    | BoardCreated of string * Coordinates
     | PlayerSpawned of string * Coordinates
-    | ItemSpawned of ItemType * Coordinates
+    | ItemSpawned of Item
 
 type SequencedEvent = int * Event // Usefull?
 
@@ -47,10 +48,10 @@ let uniqueRandomPos n (maxX, maxY) =
     nUnique n (fun () -> rnd.Next (0, maxX), rnd.Next (0, maxY)) []
 
 let makeItem position =
+    position, 
     (match rnd.Next (0, 100) with
     | n when n < 70 -> rnd.Next (1, 10) |> Points
     | _ -> Transporter)
-    , position
 
 let (-><-) s x = (Seq.take x s), (Seq.skip x s)
 

@@ -41,11 +41,14 @@ let startupNew () =
     let size = promptBoardDimentions ()
     let itemCount = promptItemCount ()
     hr ()
-    let world = GameWorld.empty gameKey size
     let initEvents = GameWorld.makeGameWorld 
                         playerNames 
                         size 
                         itemCount
+    Seq.append 
+        [GameWorld.BoardCreated (gameKey, size)]
+        initEvents
+    |> Seq.iter Engine.processEvent
     ()
 
 let startupReplay () =
