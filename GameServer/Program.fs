@@ -4,6 +4,13 @@ open Http
 let hr () = 
     printfn "------------------------------------------------------------------"
 
+let setInterval interval f = Async.Start(async {
+    let rec loop () =
+        Async.Sleep interval |> Async.RunSynchronously
+        f ()
+        loop ()
+    loop () })
+
 let prompt (question : string) =
     Console.Write question
     Console.ReadLine().Trim()
@@ -45,11 +52,12 @@ let startupNew () =
     Seq.append 
         [GameWorld.BoardCreated (gameKey, size)]
         initEvents
-    |> Seq.iter Engine.processEvent
-    Engine.ping () // Syncronize.., wait for all events
-    Reporting.queryBoardASCII ()
-    |> Log.dbg
-    ()
+    |> Engine.processEvents
+    //Engine.ping () // Syncronize.., wait for all events (not needed now)
+    setInterval 5000 
+        (fun () ->
+            Reporting.queryBoardASCII ()
+            |> Log.dbg)
 
 let startupReplay () =
     Log.dbg "REPLAY not implemented!"

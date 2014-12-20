@@ -52,5 +52,8 @@ let eventProcessor = MailboxProcessor.Start(fun inbox ->
 let processEvent gameEvent = 
     eventProcessor.Post <| Event (gameEvent)
 
+let processEvents gameEvents =
+    Seq.iter processEvent gameEvents
+
 let ping () =
     eventProcessor.PostAndReply(fun chan -> Ping (chan))
