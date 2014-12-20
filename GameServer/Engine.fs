@@ -5,9 +5,13 @@ open GameWorld
 let createBoard key size =
     sprintf "Board %A size %A initializing" key size |> Log.dbg
     { GameKey = key
+      Version = 0
       Size = size
       Players = []
       Items = [] }
+
+let bumpVersion world = 
+    { world with Version = world.Version + 1 }
 
 let spawnPlayer name xy world =
     sprintf "Spawning player %s at %A" name xy |> Log.dbg
@@ -21,28 +25,32 @@ let spawnItem itemType xy world =
     { world with
         Items = (xy, itemType)::world.Items }
 
+type Message =
+    | Event of GameWorld.Event
+    | Ping of AsyncReplyChannel<unit>
+
 let applyEvent event world =
-    let world = match event with
-    | BoardCreated (key, size) -> createBoard key size
-    | PlayerSpawned (name, xy) -> spawnPlayer name xy world
-    | ItemSpawned (xy, itemType) -> spawnItem itemType xy world
-    | Ping chan -> 
-        chan.Reply ()
-        world
-    Reporting.updateState world
-    world
+    match event with
+    | BoardCreated (key, size)   -> bumpVersion <| createBoard key size
+    | PlayerSpawned (name, xy)   -> bumpVersion <| spawnPlayer name xy world
+    | ItemSpawned (xy, itemType) -> bumpVersion <| spawnItem itemType xy world
 
 let eventProcessor = MailboxProcessor.Start(fun inbox ->
     let rec loop world =
-        async { let! event = inbox.Receive()
-                return! applyEvent event world 
-                        |> loop }
+        async { let! message = inbox.Receive()
+                match message with
+                | Event e -> 
+                    let world = applyEvent e world
+                    Reporting.updateState world
+                    return! loop world
+                | Ping chan ->
+                    chan.Reply ()
+                    return! loop world }
     GameWorld.empty 
     |> loop)
 
-
-
-let processEvent = eventProcessor.Post
+let processEvent gameEvent = 
+    eventProcessor.Post <| Event (gameEvent)
 
 let ping () =
     eventProcessor.PostAndReply(fun chan -> Ping (chan))

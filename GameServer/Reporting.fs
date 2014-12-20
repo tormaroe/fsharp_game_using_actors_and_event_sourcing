@@ -1,7 +1,14 @@
 ﻿module Reporting
 
+open GameWorld
+open System.Text
+
 let getAsciiBoard world =
-    "ASCII"
+    let sb = StringBuilder ()
+    ignore <| sb.AppendFormat ("GAME: {0} version {1}\n", world.GameKey, world.Version)
+    // TODO: Draw board
+    // TODO: List players
+    sb.ToString ()
 
 type Query =
     | UpdateState of GameWorld.World

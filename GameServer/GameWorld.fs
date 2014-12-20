@@ -16,6 +16,7 @@ type Item = Coordinates * ItemType
 
 type World = {
     GameKey: string
+    Version: int
     Size: Coordinates
     Players : Player list
     Items: Item list
@@ -23,6 +24,7 @@ type World = {
 
 let empty = {
     GameKey = ""
+    Version = -1
     Size = 0,0
     Players = []
     Items = [] 
@@ -32,7 +34,6 @@ type Event =
     | BoardCreated of string * Coordinates
     | PlayerSpawned of string * Coordinates
     | ItemSpawned of Item
-    | Ping of AsyncReplyChannel<unit>
 
 type SequencedEvent = int * Event // Usefull?
 
