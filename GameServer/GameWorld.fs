@@ -32,6 +32,7 @@ type Event =
     | BoardCreated of string * Coordinates
     | PlayerSpawned of string * Coordinates
     | ItemSpawned of Item
+    | Ping of AsyncReplyChannel<unit>
 
 type SequencedEvent = int * Event // Usefull?
 

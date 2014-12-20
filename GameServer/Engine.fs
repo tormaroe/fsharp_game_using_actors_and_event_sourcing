@@ -22,16 +22,27 @@ let spawnItem itemType xy world =
         Items = (xy, itemType)::world.Items }
 
 let applyEvent event world =
-    match event with
+    let world = match event with
     | BoardCreated (key, size) -> createBoard key size
     | PlayerSpawned (name, xy) -> spawnPlayer name xy world
     | ItemSpawned (xy, itemType) -> spawnItem itemType xy world
+    | Ping chan -> 
+        chan.Reply ()
+        world
+    Reporting.updateState world
+    world
 
 let eventProcessor = MailboxProcessor.Start(fun inbox ->
     let rec loop world =
         async { let! event = inbox.Receive()
-                return! applyEvent event world |> loop }
+                return! applyEvent event world 
+                        |> loop }
     GameWorld.empty 
     |> loop)
 
+
+
 let processEvent = eventProcessor.Post
+
+let ping () =
+    eventProcessor.PostAndReply(fun chan -> Ping (chan))

@@ -1,7 +1,4 @@
-﻿// Learn more about F# at http://fsharp.net
-// See the 'F# Tutorial' project for more help.
-
-open System
+﻿open System
 open Http
 
 let hr () = 
@@ -49,6 +46,9 @@ let startupNew () =
         [GameWorld.BoardCreated (gameKey, size)]
         initEvents
     |> Seq.iter Engine.processEvent
+    Engine.ping () // Syncronize.., wait for all events
+    Reporting.queryBoardASCII ()
+    |> Log.dbg
     ()
 
 let startupReplay () =
