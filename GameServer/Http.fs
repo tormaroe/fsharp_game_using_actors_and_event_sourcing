@@ -2,6 +2,7 @@
 
 open System.Net
 open System.Web
+open SimpleJSON
 
 let respond (ctx:HttpListenerContext) (code, (result:string)) =
     Log.dbg <| sprintf "<< %d" code
@@ -11,14 +12,21 @@ let respond (ctx:HttpListenerContext) (code, (result:string)) =
     res.ContentLength64 <- bytes.LongLength
     res.OutputStream.Write(bytes, 0, bytes.Length)
 
+let handleGetPlayer (ctx:HttpListenerContext) =
+    let secret = ctx.Request.Headers.Get("password")
+    match Reporting.queryPlayer secret with
+    | Some player -> 200, toJson player
+    | None -> 401, "Unknown secret, can't get player info"
+
 let resourcePath (ctx:HttpListenerContext) =
     HttpUtility.UrlDecode 
         (ctx.Request.Url.AbsolutePath, ctx.Request.ContentEncoding)
 
 let dispatch (ctx:HttpListenerContext) =
     match ctx |> resourcePath with
-    | "/"   -> 200, "HOME"
-    | _     -> 404, "UNKNOWN RESOURCE"
+    | "/"       -> 200, "HOME"
+    | "/player" -> handleGetPlayer ctx
+    | _         -> 404, "UNKNOWN RESOURCE"
     |> respond ctx 
 
 let handleRequest (ctx:HttpListenerContext) = 
