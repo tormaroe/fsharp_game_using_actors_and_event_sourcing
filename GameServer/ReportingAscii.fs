@@ -36,7 +36,65 @@ let getAsciiBoard world =
     appendRepeat '-' board.[0].Length
     appendString "+\n"
     world.Players 
-    |> Seq.sortBy (fun p -> p.Points)
+    |> Seq.sortBy (fun p -> p.Points * -1)
     |> Seq.iter (fun p -> 
         appendFormat "PLAYER @{0}: {1}p - {2}\n" [| p.Position ; p.Points ; p.Id |])
     sb.ToString ()
+
+
+(*** Tests ***)
+
+module ReportingAsciiTests =
+
+    open NUnit.Framework
+    open FsUnit
+
+    [<TestFixture>]
+    type ``ASCII reporting tests`` () =
+        let world = { GameWorld.empty 
+                      with Size = (10, 5)
+                           Version = 12
+                           GameKey = "FooBar"
+                           Players = [{ Id="Player 1"
+                                        Points=0
+                                        Position=(0,0)
+                                        Secret="" }
+                                      { Id="Player 2"
+                                        Points=3
+                                        Position=(1,2)
+                                        Secret="" }] 
+                           Items = [((0,4), Points(1))
+                                    ((9,0), Points(9))
+                                    ((1,1), Transporter)] }
+
+        [<Test>] member x.
+         ``Should set players and items in a board array og arrays`` () =
+            getBoardArrays world
+            |> should equal
+                [|
+                    [|'P';' ';' ';' ';' ';' ';' ';' ';' ';'9'|]
+                    [|' ';'T';' ';' ';' ';' ';' ';' ';' ';' '|]
+                    [|' ';'P';' ';' ';' ';' ';' ';' ';' ';' '|]
+                    [|' ';' ';' ';' ';' ';' ';' ';' ';' ';' '|]
+                    [|'1';' ';' ';' ';' ';' ';' ';' ';' ';' '|]
+                |]
+
+        [<Test>] member x.
+         ``Should make nice ASCII board report`` () =
+            getAsciiBoard world
+            |> (fun (s:string) -> s.Split [|'\r';'\n'|])
+            |> should equal
+                [|
+                    ""
+                    "GAME: FooBar VERSION: 12"
+                    "   +----------+"
+                    "  0|P        9|"
+                    "  1| T        |"
+                    "  2| P        |"
+                    "  3|          |"
+                    "  4|1         |"
+                    "   +----------+"
+                    "PLAYER @(1, 2): 3p - Player 2" // Note sort order (DESC)
+                    "PLAYER @(0, 0): 0p - Player 1"
+                    ""
+                |]

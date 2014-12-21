@@ -45,3 +45,45 @@ let processEvent = eventProcessor.Post
 
 let processEvents gameEvents =
     Seq.iter processEvent gameEvents
+
+
+(*** Tests ***)
+
+module EngineTests =
+
+    open NUnit.Framework
+    open FsUnit
+
+    let testEvents events callback =
+        processEvents events
+        Async.Sleep 200 |> Async.RunSynchronously // Should syncronize (ping would be nice now)...
+        Reporting.queryWorld () 
+        |> callback
+
+    [<Test>]
+    let ``Should create world`` ()=
+        testEvents 
+            [BoardCreated ("FooBar", (10,10))]
+            (fun world ->
+                world.Version |> should equal 1
+                world.GameKey |> should equal "FooBar" )
+            
+    [<Test>]
+    let ``Should spawn players`` ()=
+        testEvents 
+            [BoardCreated ("FooBar", (10,10))
+             PlayerSpawned ("Joe", (0,0), "password")
+             PlayerSpawned ("Jim", (0,1), "password")]
+            (fun world ->
+                world.Version |> should equal 3
+                world.Players.Length |> should equal 2 )
+            
+    [<Test>]
+    let ``Should spawn items`` ()=
+        testEvents 
+            [BoardCreated ("FooBar", (10,10))
+             ItemSpawned ((0,0), Points 1)
+             ItemSpawned ((0,1), Transporter)]
+            (fun world ->
+                world.Version |> should equal 3
+                world.Items.Length |> should equal 2 )

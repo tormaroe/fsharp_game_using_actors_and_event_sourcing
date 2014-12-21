@@ -13,6 +13,10 @@ let private getPlayer secret world =
     world.Players
     |> List.tryFind (fun p -> p.Secret = secret)
     
+// TODO: If an error is thrown in processor thread
+//       nothing good happens. Example: queryBoardASCII of GameWorld.empty
+//       Need to trap exceptions, report and continue
+
 let private reportingActor = MailboxProcessor.Start(fun inbox ->
     let rec loop world =
         async { let! query = inbox.Receive()
@@ -21,6 +25,9 @@ let private reportingActor = MailboxProcessor.Start(fun inbox ->
                 | QueryBoardASCII chan ->
                     world |> getAsciiBoard |> chan.Reply
                     return! loop world 
+                | QueryWorld (chan) ->
+                    world |> chan.Reply 
+                    return! loop world
                 | QueryPlayer (secret, chan) ->
                     world |> getPlayer secret |> chan.Reply 
                     return! loop world }
@@ -45,3 +52,35 @@ let queryPlayer secret =
     query (fun chan -> QueryPlayer (secret, chan))
     |> Async.RunSynchronously
 
+
+(*** Tests ***)
+
+module ReportingTests =
+
+    open NUnit.Framework
+    open FsUnit
+
+    [<Test>]
+    let ``Should get player from updated board`` () =
+        { GameWorld.empty
+            with Players = [{ Id="Player 1"
+                              Points=1
+                              Position=(1,1)
+                              Secret="pass1" }
+                            { Id="Player 2"
+                              Points=2
+                              Position=(2,2)
+                              Secret="pass2" }] }
+        |> updateState
+        "bad_password" |> queryPlayer |> should equal None
+        "pass2" |> queryPlayer |> should equal (Some { Id="Player 2"
+                                                       Points=2
+                                                       Position=(2,2)
+                                                       Secret="pass2" })
+
+    [<Test>]
+    let ``Should get ASCII board via reporting actor`` () =
+        updateState 
+            { GameWorld.empty with GameKey="FooBar"; Size=(2,2) }
+        queryBoardASCII () |> should contain "GAME: FooBar"
+             
