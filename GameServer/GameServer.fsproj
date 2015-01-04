@@ -67,6 +67,7 @@
     <Compile Include="Reporting.fs" />
     <Compile Include="Engine.fs" />
     <Compile Include="SimpleJSON.fs" />
+    <Compile Include="Commands.fs" />
     <Compile Include="Http.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />

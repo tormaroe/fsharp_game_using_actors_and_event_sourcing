@@ -8,10 +8,6 @@ type Query =
     | QueryWorld of AsyncReplyChannel<GameWorld.World>
     | QueryBoardASCII of AsyncReplyChannel<string>
     | QueryPlayer of Secret * AsyncReplyChannel<GameWorld.Player option>
-
-let private getPlayer secret world =
-    world.Players
-    |> List.tryFind (fun p -> p.Secret = secret)
     
 // TODO: If an error is thrown in processor thread
 //       nothing good happens. Example: queryBoardASCII of GameWorld.empty

@@ -38,6 +38,7 @@ type Event =
     | BoardCreated of string * Coordinates
     | PlayerSpawned of PlayerName * Coordinates * Secret
     | ItemSpawned of Item
+    | PlayerMoved of PlayerName * Coordinates
 
 type SequencedEvent = int * Event // Usefull?
 
@@ -68,6 +69,11 @@ let makeGameWorld namePasswords size itemCount =
     Seq.append
         (Seq.map2 (fun (n,pw) p -> PlayerSpawned(n, p, pw)) namePasswords playerPos)
         (itemPos |> Seq.map makeItem |> Seq.map ItemSpawned)
+
+
+let getPlayer secret world =
+    world.Players
+    |> List.tryFind (fun p -> p.Secret = secret)
 
 
 (*** Tests ***)
